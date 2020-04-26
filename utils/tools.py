@@ -19,4 +19,17 @@ def get_knapsack(n='01') -> dict:
     kdct = {k: v.split('\n') for k, v in kdct.items()}
     kdct = {k: [int(x) for x in v if len(x)>0] for k, v in kdct.items()}
     print(n, 'is loaded!')
+    
     return kdct
+
+
+def get_profit(knapsack, optimal):
+
+    ttl_weight = sum([item[0] * item[1] for item in zip(knapsack['weights'], optimal)])
+    ttl_profit = sum([item[0] * item[1] for item in zip(knapsack['profits'], optimal)])
+
+    if ttl_weight > knapsack['capacity'][0]:
+        print('Total weight exceed knapsack capacity ({} > {})'.format(
+               ttl_weight, knapsack['capacity'][0]))
+
+    return ttl_profit

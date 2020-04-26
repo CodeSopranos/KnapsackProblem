@@ -8,10 +8,6 @@ class Algorithm(ABC):
     def solve(self):
         pass
 
-    @abstractmethod
-    def eval(self):
-        pass
-
     @abstractproperty
     def name(self):
         pass

@@ -1,6 +1,8 @@
 import requests
 import numpy as np
 import pandas as pd
+from datetime import datetime
+from algorithm.base import Algorithm
 
 
 def get_knapsack(n='01') -> dict:
@@ -33,3 +35,57 @@ def compute_knapsack(knapsack, optimal, verbose=False):
                ttl_weight, knapsack['capacity'][0]))
 
     return ttl_weight, ttl_profit
+
+
+def generate_stat(algorithms,
+                  benchmarks,
+                  alg_params,
+                  n_observations=3,
+                  **params):
+
+    for algorithm, params in zip(algorithms, alg_params):
+        test_knap = dict(benchmarks[1], **params)
+        assert isinstance(algorithm(test_knap), Algorithm)
+
+    info_dct    = {
+                     'algorithm':     [],
+                     'benchmark':     [],
+                     'capacity':      [],
+                     'preprocessing': [],
+                     'execution':     [],
+                     'observation':   [],
+#                      'n_operations':  [],
+                     'optim_weight':  [],
+                     'optim_profit':  [],
+                   }
+    for observation in range(n_observations):
+
+        for key in benchmarks:
+
+            knapsack = benchmarks[key]
+
+            for algorithm, params in zip(algorithms, alg_params):
+
+                knapsack = dict(knapsack, **params)
+
+                start_time = datetime.now()
+                alg = algorithm(knapsack)
+                preprocess = datetime.now() - start_time
+
+                start_time = datetime.now()
+                optimal    = alg.solve()
+                execution  = datetime.now() - start_time
+
+                w, p = compute_knapsack(knapsack, optimal)
+
+
+                info_dct['algorithm']     += [alg.name]
+                info_dct['benchmark']     += [key]
+                info_dct['capacity']      += [knapsack['capacity'][0]]
+                info_dct['preprocessing'] += [preprocess.total_seconds()]
+                info_dct['execution']     += [execution.total_seconds()]
+                info_dct['observation']   += [observation]
+#                 info_dct['n_operations']  += [alg.n_operations]
+                info_dct['optim_weight']  += [w]
+                info_dct['optim_profit']  += [p]
+    return pd.DataFrame.from_dict(info_dct)

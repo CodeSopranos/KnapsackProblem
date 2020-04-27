@@ -4,6 +4,7 @@ from utils.simple_queue import SimpleQueue
 from utils.simple_queue import Node
 from algorithm.base import Algorithm
 
+
 class BranchAndBound(Algorithm):
 
     def __init__(self, knapsack):
@@ -22,7 +23,7 @@ class BranchAndBound(Algorithm):
 
     def eval(self):
         assert len(self.picks) != 0
-        return self.optimal == self.picks 
+        return self.optimal == self.picks
 
     def solve(self):
         """Branch and bounds method for solving knapsack problem

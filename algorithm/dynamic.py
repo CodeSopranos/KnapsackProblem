@@ -15,11 +15,12 @@ class Dynamic(Algorithm):
         self.optimal = knapsack['optimal']
         self.picks = []
         self.check_inputs()
-        
+
     @property
     def name(self):
-        return 'Boyer-Moore-Horspool'
-       
+        return 'Dynamic'
+
+
     def solve(self):
         table = np.zeros((self.n_items + 1, self.capacity + 1), dtype = np.float32)
         keep = np.zeros((self.n_items + 1, self.capacity + 1), dtype = np.float32)
@@ -44,7 +45,7 @@ class Dynamic(Algorithm):
 
         idx.sort()
         idx = [x - 1 for x in idx] # change to 0-index
-        
+
         self.picks = [0] * self.n_items
         for wc in idx:
             self.picks[wc] = 1
@@ -53,7 +54,7 @@ class Dynamic(Algorithm):
     def eval(self):
         assert len(self.picks) != 0
         return self.optimal == self.picks
-    
+
     def check_inputs(self):
         # check variable type
         assert(isinstance(self.profits, list))

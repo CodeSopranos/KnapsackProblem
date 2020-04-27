@@ -64,7 +64,7 @@ class Genetic(Algorithm):
         maximum = max(profits)
         max_n   = profits.count(maximum)
         if max_n / n > pconverge:
-            print('Converged')
+            # print('Converged')
             return True
         else:
             return False

@@ -54,7 +54,6 @@ def generate_stat(algorithms,
                      'preprocessing': [],
                      'execution':     [],
                      'observation':   [],
-#                      'n_operations':  [],
                      'optim_weight':  [],
                      'optim_profit':  [],
                    }
@@ -85,7 +84,30 @@ def generate_stat(algorithms,
                 info_dct['preprocessing'] += [preprocess.total_seconds()]
                 info_dct['execution']     += [execution.total_seconds()]
                 info_dct['observation']   += [observation]
-#                 info_dct['n_operations']  += [alg.n_operations]
                 info_dct['optim_weight']  += [w]
                 info_dct['optim_profit']  += [p]
     return pd.DataFrame.from_dict(info_dct)
+
+
+def get_kdct(path, with_optimum=True):
+    with open(path, 'r') as f:
+        file = f.read()
+        file = file.split('\n')
+        # print(file[0])
+        capacity = [int(file[0].split(' ')[1])]
+        n        = int(file[0].split(' ')[0])
+        if with_optimum:
+            weights  = [int(x.split(' ')[1]) for x in file[1:-2]]
+            profits  = [int(x.split(' ')[0]) for x in file[1:-2]]
+            optimal  = [int(x) for x in file[-2].split(' ')]
+        else:
+            weights  = [int(x.split(' ')[1]) for x in file[1:]]
+            profits  = [int(x.split(' ')[0]) for x in file[1:]]
+            optimal  = []
+        kdct = { 'capacity': capacity,
+                 'n': n,
+                 'weights': weights,
+                 'profits': profits,
+                 'optimal': optimal
+               }
+        return kdct

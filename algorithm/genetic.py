@@ -62,7 +62,7 @@ class Genetic(Algorithm):
             ttl_weight, ttl_profit = tools.compute_knapsack(knapsack, chrom)
             while ttl_weight > knapsack['capacity'][0]:
                 indexes = list(locate(chrom, lambda x: x == 1))
-                indexes = random.choices(indexes, k=int(len(chrom)*0.15)+1)
+                indexes = random.choices(indexes, k=int(len(chrom)*0.3)+1)
                 for ind in indexes:
                     chrom[ind] = 0
                 ttl_weight, ttl_profit = tools.compute_knapsack(knapsack, chrom)
@@ -74,6 +74,7 @@ class Genetic(Algorithm):
         profits = [p[1] for p in fit_lst]
         maximum = max(profits)
         max_n   = profits.count(maximum)
+        # print(sorted(profits))
         self.converged = max_n / n
         if self.converged > pconverge:
             return True
@@ -94,9 +95,9 @@ class Genetic(Algorithm):
         return generation
 
     @staticmethod
-    def roulette(population, fit_lst):
+    def roulette(population, fit_lst, t=0.8):
 
-        survive_chances = [c[1] for c in fit_lst]
+        survive_chances = [c[1] / t for c in fit_lst]
         pair = random.choices(population,
                               weights=survive_chances,
                               k=2)

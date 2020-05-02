@@ -4,6 +4,7 @@ from utils.simple_queue import SimpleQueue
 from utils.simple_queue import Node
 from algorithm.base import Algorithm
 import cplex
+from ortools.linear_solver import pywraplp
 from cplex import Cplex
 from cplex.exceptions import CplexError
 import sys, os
@@ -40,29 +41,33 @@ class BranchAndBound(Algorithm):
         return self.optimal == self.picks
 
     def solve(self):
-        xvar = [ 'x'+str(j) for j in range(1,self.n_items+1) ]
-        types = 'B'*self.n_items
-        ub = [1]*self.n_items
-        lb = [0]*self.n_items
+        # initialize the integer programming model with the open source CBC solver
+        solver = pywraplp.Solver('simple_mip_program', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
 
-        try:
-            with HiddenPrints():
-                prob = cplex.Cplex()
-                prob.objective.set_sense(prob.objective.sense.maximize)
-                prob.variables.add(obj = self.profits, lb = lb, ub = ub, types = types, names = xvar )
+        # Declare binary variable x for each item from 1 to n
+        x_dict = []
+        for i in range(self.n_items):
+            x_dict.append(solver.IntVar(0, 1, f'x_{i}'))
+        # Add constraint on total weight of items selected cannot exceed   weight threshold
+        solver.Add(solver.Sum([self.weights[i]*x_dict[i] for i in range(self.n_items)]) <= self.capacity)
+        # Maximize total utility score
+        solver.Maximize(solver.Sum([self.profits[i]*x_dict[i] for i in range(self.n_items)]))
+        # Solve!
+        status = solver.Solve()
+        self.picks = [0] * self.n_items
 
-                rows = [[ xvar, self.weights], [ xvar, [1]*self.n_items],]
-                
-                prob.linear_constraints.add(lin_expr = rows, senses = 'LL', rhs = [self.capacity, self.capacity,], names = ['r1','r2',] )
-                prob.solve()
-
-            # print("Solution value  = ", prob.solution.get_objective_value())
-            xsol = prob.solution.get_values()
-            self.picks = xsol
-            return self.picks
-        except CplexError as exc:
-            print(exc)
-            return -1
+        for i in range(self.n_items):
+            self.picks[i] = x_dict[i].solution_value()
+            
+        # Uncomment the section below to print solution details
+        # if status == pywraplp.Solver.OPTIMAL:
+        #    print("OPTIMAL")
+        #    print('Solution:')
+        #    print('Objective value =', solver.Objective().Value())
+        #    print('Problem solved in %f milliseconds' % solver.wall_time())
+        #    for i in x_dict:
+        #        print(f'{x_dict[i]} = {x_dict[i].solution_value()}')
+        return self.picks
 
     def check_inputs(self):
         # check variable type

@@ -20,37 +20,37 @@ class Dynamic(Algorithm):
     def name(self):
         return 'Dynamic'
 
-
     def solve(self):
-        table = np.zeros((self.n_items + 1, self.capacity + 1), dtype = np.float32)
-        keep = np.zeros((self.n_items + 1, self.capacity + 1), dtype = np.float32)
+        K = [[0 for x in range(self.capacity + 1)] for x in range(self.n_items + 1)]
 
-        for i in range(1, self.n_items + 1):
-            for w in range(0, self.capacity + 1):
-                wi = self.weights[i - 1] # weight of current item
-                vi = self.profits[i - 1] # value of current item
-                if (wi <= w) and (vi + table[i - 1, w - wi] > table[i - 1, w]):
-                    table[i, w] = vi + table[i - 1, w - wi]
-                    keep[i, w] = 1
+        for i in range(self.n_items + 1):
+            for w in range(self.capacity + 1):
+                if i == 0 or w == 0:
+                    K[i][w] = 0
+                elif self.weights[i - 1] <= w:
+                    K[i][w] = max(self.profits[i - 1] + K[i - 1][w - self.weights[i - 1]], K[i - 1][w])
                 else:
-                    table[i, w] = table[i - 1, w]
+                    K[i][w] = K[i - 1][w]
 
-        idx = []
-        K = self.capacity
-
-        for i in range(self.n_items, 0, -1):
-            if keep[i, K] == 1:
-                idx.append(i)
-                K -= self.weights[i - 1]
-
-        idx.sort()
-        idx = [x - 1 for x in idx] # change to 0-index
-
+        items_set = []
+        self.find_items_set(K, self.n_items, self.capacity, self.weights, items_set)
         self.picks = [0] * self.n_items
-        for wc in idx:
-            self.picks[wc] = 1
+        for x in items_set:
+            self.picks[x] = 1
         return self.picks
 
+    def find_items_set(self, K, i, w, weights, items_set):
+        if K[i][w] == 0:
+            return
+
+        if K[i - 1][w] == K[i][w]:
+            self.find_items_set(K, i - 1, w, weights, items_set)
+        else:
+            self.find_items_set(K, i - 1, w - weights[i - 1], weights, items_set)
+            items_set.append(i - 1)
+
+        return items_set
+    
     def eval(self):
         assert len(self.picks) != 0
         return self.optimal == self.picks

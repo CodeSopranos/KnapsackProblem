@@ -41,32 +41,19 @@ class BranchAndBound(Algorithm):
         return self.optimal == self.picks
 
     def solve(self):
-        # initialize the integer programming model with the open source CBC solver
-        solver = pywraplp.Solver('simple_mip_program', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
+        solver = pywraplp.Solver('simple_mip_program', pywraplp.Solver.CLP_LINEAR_PROGRAMMING)
 
-        # Declare binary variable x for each item from 1 to n
         x_dict = []
         for i in range(self.n_items):
             x_dict.append(solver.IntVar(0, 1, f'x_{i}'))
-        # Add constraint on total weight of items selected cannot exceed   weight threshold
         solver.Add(solver.Sum([self.weights[i]*x_dict[i] for i in range(self.n_items)]) <= self.capacity)
-        # Maximize total utility score
         solver.Maximize(solver.Sum([self.profits[i]*x_dict[i] for i in range(self.n_items)]))
-        # Solve!
         status = solver.Solve()
         self.picks = [0] * self.n_items
 
         for i in range(self.n_items):
             self.picks[i] = x_dict[i].solution_value()
-            
-        # Uncomment the section below to print solution details
-        # if status == pywraplp.Solver.OPTIMAL:
-        #    print("OPTIMAL")
-        #    print('Solution:')
-        #    print('Objective value =', solver.Objective().Value())
-        #    print('Problem solved in %f milliseconds' % solver.wall_time())
-        #    for i in x_dict:
-        #        print(f'{x_dict[i]} = {x_dict[i].solution_value()}')
+
         return self.picks
 
     def check_inputs(self):

@@ -4,6 +4,7 @@ from utils.simple_queue import SimpleQueue
 from utils.simple_queue import Node
 from algorithm.base import Algorithm
 import cplex
+from ortools.linear_solver import pywraplp
 from cplex import Cplex
 from cplex.exceptions import CplexError
 import sys, os
@@ -40,29 +41,20 @@ class BranchAndBound(Algorithm):
         return self.optimal == self.picks
 
     def solve(self):
-        xvar = [ 'x'+str(j) for j in range(1,self.n_items+1) ]
-        types = 'B'*self.n_items
-        ub = [1]*self.n_items
-        lb = [0]*self.n_items
+        solver = pywraplp.Solver('simple_mip_program', pywraplp.Solver.CLP_LINEAR_PROGRAMMING)
 
-        try:
-            with HiddenPrints():
-                prob = cplex.Cplex()
-                prob.objective.set_sense(prob.objective.sense.maximize)
-                prob.variables.add(obj = self.profits, lb = lb, ub = ub, types = types, names = xvar )
+        x_dict = []
+        for i in range(self.n_items):
+            x_dict.append(solver.IntVar(0, 1, f'x_{i}'))
+        solver.Add(solver.Sum([self.weights[i]*x_dict[i] for i in range(self.n_items)]) <= self.capacity)
+        solver.Maximize(solver.Sum([self.profits[i]*x_dict[i] for i in range(self.n_items)]))
+        status = solver.Solve()
+        self.picks = [0] * self.n_items
 
-                rows = [[ xvar, self.weights], [ xvar, [1]*self.n_items],]
-                
-                prob.linear_constraints.add(lin_expr = rows, senses = 'LL', rhs = [self.capacity, self.capacity,], names = ['r1','r2',] )
-                prob.solve()
+        for i in range(self.n_items):
+            self.picks[i] = x_dict[i].solution_value()
 
-            # print("Solution value  = ", prob.solution.get_objective_value())
-            xsol = prob.solution.get_values()
-            self.picks = xsol
-            return self.picks
-        except CplexError as exc:
-            print(exc)
-            return -1
+        return self.picks
 
     def check_inputs(self):
         # check variable type

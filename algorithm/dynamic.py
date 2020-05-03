@@ -1,4 +1,4 @@
-
+from datetime import datetime
 import numpy as np
 from algorithm.base import Algorithm
 
@@ -19,12 +19,10 @@ class Dynamic(Algorithm):
     @property
     def name(self):
         return 'Dynamic'
-
-
     def solve(self):
-        table = np.zeros((self.n_items + 1, self.capacity + 1), dtype = np.float32)
-        keep = np.zeros((self.n_items + 1, self.capacity + 1), dtype = np.float32)
-
+        table = np.zeros((self.n_items + 1, self.capacity + 1), dtype = np.int32)
+        keep = np.zeros((self.n_items + 1, self.capacity + 1), dtype = np.int32)
+        
         for i in range(1, self.n_items + 1):
             for w in range(0, self.capacity + 1):
                 wi = self.weights[i - 1] # weight of current item
@@ -33,7 +31,7 @@ class Dynamic(Algorithm):
                     table[i, w] = vi + table[i - 1, w - wi]
                     keep[i, w] = 1
                 else:
-                    table[i, w] = table[i - 1, w]
+                    table[i, w] = table[i - 1, w]        
 
         idx = []
         K = self.capacity
@@ -49,8 +47,21 @@ class Dynamic(Algorithm):
         self.picks = [0] * self.n_items
         for wc in idx:
             self.picks[wc] = 1
+        
         return self.picks
 
+    def find_items_set(self, K, i, w, weights, items_set):
+        if K[i][w] == 0:
+            return
+
+        if K[i - 1][w] == K[i][w]:
+            self.find_items_set(K, i - 1, w, weights, items_set)
+        else:
+            self.find_items_set(K, i - 1, w - weights[i - 1], weights, items_set)
+            items_set.append(i - 1)
+
+        return items_set
+    
     def eval(self):
         assert len(self.picks) != 0
         return self.optimal == self.picks

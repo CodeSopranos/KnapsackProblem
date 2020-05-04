@@ -29,7 +29,7 @@ class BranchAndBound(Algorithm):
         self.bounds = [[0, 1]] * self.n_items
         self.capacity = knapsack['capacity'][0]
         self.optimal = knapsack['optimal']
-        self.low_bound, self.fixed_weight, self.ans = 0, 0, 0
+        self.low_profit, self.saved_weight, self.ret_picks = 0, 0, 0
         self.picks = []
         self.check_inputs()
 
@@ -62,7 +62,7 @@ class BranchAndBound(Algorithm):
         if (end_time > timedelta(seconds=228)):
             return -1, -1
         
-        if profit <= self.low_bound:
+        if profit <= self.low_profit:
             return 0, 0
         
         X = np.array([x_d.solution_value() for x_d in x_dict])
@@ -76,22 +76,22 @@ class BranchAndBound(Algorithm):
             self.bounds[idx] = [0, 0]
             new_profit, new_X = self.branch_and_bound()
             if (new_profit): 
-                self.low_bound, self.ans = new_profit, new_X
+                self.low_profit, self.ret_picks = new_profit, new_X
 
             self.bounds[idx] = [1, 1]
-            self.fixed_weight += self.weights[idx]
-            if self.fixed_weight <= self.capacity:
+            self.saved_weight += self.weights[idx]
+            if self.saved_weight <= self.capacity:
                 new_profit, new_X = self.branch_and_bound()
                 if (new_profit): 
-                    self.low_bound, self.ans = new_profit, new_X 
+                    self.low_profit, self.ret_picks = new_profit, new_X 
 
             self.bounds[idx] = [0, 1]
-            self.fixed_weight -= self.weights[idx]
+            self.saved_weight -= self.weights[idx]
         else:
-            self.low_bound = profit
-            self.ans = X
+            self.low_profit = profit
+            self.ret_picks = X
 
-        return self.low_bound, self.ans
+        return self.low_profit, self.ret_picks
         
     def check_inputs(self):
         # check variable type
